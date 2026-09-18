@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- =====================================================================
+     PORTFOLIO LEÏLA GADOU — BTS SIO SISR (épreuve E5)
+     ---------------------------------------------------------------------
+     COMMENT LIRE CE FICHIER :
+     Le site est composé de DEUX grandes parties :
+       1) LE VISUEL (HTML) : tout ce qui est écrit ci-dessous jusqu'à la
+          balise </x-dc>. C'est la "façade" : textes, boutons, sections.
+       2) LE CERVEAU (JavaScript) : tout en bas, dans <script ...>. C'est
+          la "logique" : ce qui se passe quand on clique, scrolle, etc.
+          Les données (projets, compétences, missions) y sont stockées.
+
+     Les "trous" écrits {{ comme_ceci }} sont des emplacements remplis
+     automatiquement par le cerveau (ex. {{ projects }} = la liste des projets).
+
+     Le style (couleurs, tailles) est écrit DIRECTEMENT sur chaque élément
+     via style="...". C'est volontaire : tout est visible au même endroit.
+     Repères couleurs : violet #7C3AED, bleu #2563EB, cyan #22d3ee.
+====================================================================== -->
+<helmet>
+<!-- <helmet> = l'EN-TÊTE technique. On y charge :
+     - les polices d'écriture (Space Grotesk pour les titres, Inter pour les textes),
+     - la librairie d'icônes "Lucide",
+     - et les règles CSS qui ne peuvent PAS être écrites en ligne (animations, mobile). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:#07070f;color:#ececf5;font-family:'Inter',system-ui,sans-serif;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+  ::selection{background:rgba(124,58,237,.45);color:#fff}
+  ::-webkit-scrollbar{width:11px;height:11px}
+  ::-webkit-scrollbar-track{background:#0b0b18}
+  ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#7C3AED,#2563EB);border-radius:10px;border:2px solid #0b0b18}
+  /* @keyframes = des animations réutilisables, déclenchées par les éléments :
+     lgFloat = léger flottement de haut en bas | lgSpin = rotation continue
+     lgPulse = clignotement doux | lgGrad = dégradé qui se déplace (effet "vivant") */
+  @keyframes lgFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
+  @keyframes lgSpin{to{transform:rotate(360deg)}}
+  @keyframes lgPulse{0%,100%{opacity:.5}50%{opacity:1}}
+  @keyframes lgGrad{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+  @keyframes lgBlink{0%,100%{opacity:1}50%{opacity:.15}}
+  /* Défilement continu du bandeau de logos partenaires (translation vers la gauche).
+     -50% = la largeur d'UNE copie de la liste (la liste est dupliquée) => boucle sans saut. */
+  @keyframes lgMarquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  /* Le défilement se met en pause quand la souris survole le bandeau. */
+  #lg-partners-viewport:hover #lg-partners-track{animation-play-state:paused}
+  /* @media = règles RESPONSIVE (adaptation à la taille de l'écran).
+     Ci-dessous : sur écran tactile, on cache le curseur lumineux (inutile au doigt).
+     Plus bas : sous 880px les liens du menu se cachent derrière le bouton burger,
+     et sous 760px le Hero passe sur une seule colonne (téléphone). */
+  @media (hover:none){#lg-cursor,#lg-cursor-dot{display:none!important}}
+  @media (max-width:880px){
+    #lg-navlinks{display:none!important}
+    #lg-navlinks[data-open="true"]{display:flex!important;position:absolute;top:64px;left:14px;right:14px;flex-direction:column;background:rgba(11,11,24,.97);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:14px;gap:4px;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+    #lg-burger{display:flex!important}
+  }
+  @media (max-width:760px){
+    #lg-hero-grid{grid-template-columns:1fr!important;text-align:center}
+    #lg-hero-cta{justify-content:center!important}
+    #lg-hero-meta{justify-content:center!important}
+    #lg-avatar-wrap{margin:0 auto!important}
+  }
+</style>
+</helmet>
+
+<!-- Barre de PROGRESSION de lecture : la fine barre tout en haut qui se remplit
+     au fur et à mesure qu'on descend dans la page (sa largeur est calculée dans le JS). -->
+<div id="lg-progress" style="position:fixed;top:0;left:0;height:3px;width:0%;background:linear-gradient(90deg,#7C3AED,#2563EB,#22d3ee);z-index:200;box-shadow:0 0 12px rgba(124,58,237,.7);transition:width .08s linear"></div>
+<!-- PARTICULES animées en fond : un "canvas" (zone de dessin) où le JS dessine
+     des points reliés par des traits, qui bougent doucement (effet réseau). -->
+<canvas id="lg-particles" style="position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.55"></canvas>
+<!-- CURSEUR personnalisé : un halo violet (lg-cursor) + un petit point (lg-cursor-dot)
+     qui suivent la souris. Leur position est mise à jour dans le JS (événement mousemove). -->
+<div id="lg-cursor" style="position:fixed;top:0;left:0;width:330px;height:330px;margin:-165px 0 0 -165px;border-radius:50%;background:radial-gradient(circle,rgba(124,58,237,.16),rgba(37,99,235,.05) 45%,transparent 70%);pointer-events:none;z-index:1;transition:transform .18s ease-out;will-change:transform"></div>
+<div id="lg-cursor-dot" style="position:fixed;top:0;left:0;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;background:#a78bfa;pointer-events:none;z-index:201;box-shadow:0 0 10px rgba(167,139,250,.9)"></div>
+
+<!-- ============================================================
+     NAVIGATION (barre du haut, fixe)
+     - Reste visible en haut pendant tout le défilement.
+     - Le logo + nom ramènent à l'accueil ; chaque lien fait défiler
+       en douceur vers sa section (fonction navTo / scrollTo dans le JS).
+     - Le lien de la section où l'on se trouve est mis en évidence.
+     - Sur mobile : les liens passent dans le menu ☰ (bouton lg-burger).
+============================================================ -->
+<nav id="lg-nav" style="position:fixed;top:0;left:0;right:0;z-index:150;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(16px,4vw,48px);background:rgba(7,7,15,.35);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.06);transition:background .35s,box-shadow .35s,border-color .35s">
+  <a href="#accueil" onClick="{{ navTo }}" data-target="accueil" style="display:flex;align-items:center;gap:11px;text-decoration:none;cursor:pointer">
+    <span style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#7C3AED,#2563EB);display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk';font-weight:700;font-size:15px;color:#fff;box-shadow:0 6px 18px rgba(124,58,237,.45)">LG</span>
+    <span style="font-family:'Space Grotesk';font-weight:600;font-size:16px;color:#fff;letter-spacing:.2px">Leïla Gadou</span>
+  </a>
+  <div id="lg-navlinks" data-open="{{ navOpen }}" style="display:flex;align-items:center;gap:4px">
+    <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="8">
+      <a href="#" onClick="{{ item.go }}" data-navlink="{{ item.id }}" style="text-decoration:none;color:#b9b9cf;font-size:13.5px;font-weight:500;padding:8px 13px;border-radius:9px;cursor:pointer;transition:color .2s,background .2s">{{ item.label }}</a>
+    </sc-for>
+  </div>
+  <button id="lg-burger" onClick="{{ toggleMenu }}" style="display:none;align-items:center;justify-content:center;width:40px;height:40px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);border-radius:10px;color:#ececf5;cursor:pointer">
+    <i data-lucide="menu" style="width:20px;height:20px"></i>
+  </button>
+</nav>
+
+<!-- ============================================================
+     HERO = la grande première vue d'accueil (plein écran).
+     - À gauche : badge de disponibilité, nom, titre, accroche, 2 boutons,
+       et 3 chiffres clés (projets, technos, support).
+     - À droite : l'avatar "LG" entouré d'un anneau dégradé qui tourne,
+       avec 3 étiquettes flottantes (Systèmes / Cybersécurité / Réseaux).
+     - "// votre photo ici" : remplacez ce bloc par une vraie photo si souhaité.
+============================================================ -->
+<header id="accueil" style="position:relative;z-index:2;min-height:100vh;display:flex;align-items:center;padding:120px clamp(16px,5vw,64px) 80px;max-width:1200px;margin:0 auto">
+  <div style="position:absolute;top:8%;right:-6%;width:520px;height:520px;background:radial-gradient(circle,rgba(124,58,237,.28),transparent 65%);filter:blur(30px);pointer-events:none"></div>
+  <div style="position:absolute;bottom:-4%;left:-8%;width:460px;height:460px;background:radial-gradient(circle,rgba(37,99,235,.22),transparent 65%);filter:blur(30px);pointer-events:none"></div>
+  <div id="lg-hero-grid" style="position:relative;display:grid;grid-template-columns:1.25fr .9fr;gap:48px;align-items:center;width:100%">
+    <div>
+      <div id="lg-hero-meta" style="display:inline-flex;align-items:center;gap:9px;padding:7px 15px;border-radius:100px;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.3);font-size:12.5px;font-weight:600;color:#c4b5fd;margin-bottom:26px">
+        <span style="width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 8px #34d399;animation:lgPulse 2s infinite"></span>
+        Disponible en alternance à partir de juillet 2027
+      </div>
+      <h1 style="font-family:'Space Grotesk';font-weight:700;font-size:clamp(40px,6.2vw,74px);line-height:1.02;margin:0 0 18px;letter-spacing:-1.5px">
+        Leïla<br><span style="background:linear-gradient(120deg,#a78bfa,#60a5fa,#22d3ee);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:lgGrad 6s ease infinite">Gadou</span>
+      </h1>
+      <p style="font-family:'Space Grotesk';font-size:clamp(17px,2.4vw,23px);font-weight:500;color:#e3e3f2;margin:0 0 8px">Étudiante BTS SIO — Option SISR</p>
+      <p style="font-size:clamp(15px,1.6vw,17px);color:#9a9ab4;line-height:1.65;max-width:520px;margin:0 0 34px">Alternante <strong style="color:#cfcfe6;font-weight:600">Support Système &amp; Mobilité</strong> chez B&amp;A Conseil. Je conçois, déploie et sécurise des infrastructures systèmes, réseaux et réalise la gestion du parc informatique de nos clients.</p>
+      <div id="lg-hero-cta" style="display:flex;gap:14px;flex-wrap:wrap">
+        <button onClick="{{ goAbout }}" style="display:inline-flex;align-items:center;gap:9px;padding:14px 26px;border:none;border-radius:12px;background:linear-gradient(135deg,#7C3AED,#2563EB);color:#fff;font-size:14.5px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 10px 30px rgba(124,58,237,.45);transition:transform .2s,box-shadow .2s" style-hover="transform:translateY(-3px);box-shadow:0 16px 40px rgba(124,58,237,.6)">
+          Découvrir mon parcours <i data-lucide="arrow-down" style="width:17px;height:17px"></i>
+        </button>
+        <button onClick="{{ goContact }}" style="display:inline-flex;align-items:center;gap:9px;padding:14px 26px;border:1px solid rgba(255,255,255,.16);border-radius:12px;background:rgba(255,255,255,.04);color:#ececf5;font-size:14.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .2s,border-color .2s" style-hover="background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.3)">
+          Me contacter <i data-lucide="mail" style="width:17px;height:17px"></i>
+        </button>
+      </div>
+ <!-- ============================================================
+     <div style="display:flex;gap:30px;margin-top:42px;flex-wrap:wrap">
+        <div><div style="font-family:'Space Grotesk';font-size:30px;font-weight:700;color:#fff">5+</div><div style="font-size:12.5px;color:#8888a4;margin-top:2px">Projets E5</div></div>
+        <div><div style="font-family:'Space Grotesk';font-size:30px;font-weight:700;color:#fff">20+</div><div style="font-size:12.5px;color:#8888a4;margin-top:2px">Technologies</div></div>
+        <div><div style="font-family:'Space Grotesk';font-size:30px;font-weight:700;color:#fff">N1/N2</div><div style="font-size:12.5px;color:#8888a4;margin-top:2px">Support &amp; MDM</div></div>
+      </div>
+============================================================ -->
+    </div>
+    <div id="lg-avatar-wrap" style="position:relative;width:300px;height:300px;justify-self:center">
+      <div style="position:absolute;inset:-14px;border-radius:50%;background:conic-gradient(from 0deg,#7C3AED,#2563EB,#22d3ee,#7C3AED);animation:lgSpin 14s linear infinite;filter:blur(2px);opacity:.85"></div>
+      <div style="position:absolute;inset:0;border-radius:50%;background:#0b0b18;display:flex;align-items:center;justify-content:center;overflow:hidden;border:3px solid #0b0b18">
+        <div style="width:100%;height:100%;background:repeating-linear-gradient(45deg,rgba(124,58,237,.16) 0 12px,rgba(37,99,235,.1) 12px 24px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+          <span style="font-family:'Space Grotesk';font-size:74px;font-weight:700;background:linear-gradient(135deg,#a78bfa,#60a5fa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">LG</span>
+          <span style="font-family:'Space Mono',monospace;font-size:10px;color:#7a7a96;letter-spacing:.5px">// votre photo ici</span>
+        </div>
+      </div>
+      <div style="position:absolute;top:-6px;right:-22px;padding:9px 13px;border-radius:12px;background:rgba(11,11,24,.85);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#d7d7ea;animation:lgFloat 5s ease-in-out infinite;box-shadow:0 12px 30px rgba(0,0,0,.4)"><i data-lucide="server" style="width:15px;height:15px;color:#a78bfa"></i> Systèmes</div>
+      <div style="position:absolute;bottom:14px;left:-34px;padding:9px 13px;border-radius:12px;background:rgba(11,11,24,.85);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#d7d7ea;animation:lgFloat 6.5s ease-in-out infinite;box-shadow:0 12px 30px rgba(0,0,0,.4)"><i data-lucide="shield-check" style="width:15px;height:15px;color:#60a5fa"></i> Cybersécurité</div>
+      <div style="position:absolute;bottom:-18px;right:18px;padding:9px 13px;border-radius:12px;background:rgba(11,11,24,.85);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#d7d7ea;animation:lgFloat 5.8s ease-in-out infinite .5s;box-shadow:0 12px 30px rgba(0,0,0,.4)"><i data-lucide="network" style="width:15px;height:15px;color:#22d3ee"></i> Réseaux</div>
+      <div style="position:absolute;bottom:190px;right:250px;padding:9px 13px;border-radius:12px;background:rgba(11,11,24,.85);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#d7d7ea;animation:lgFloat 5.8s ease-in-out infinite .5s;box-shadow:0 12px 30px rgba(0,0,0,.4)"><i data-lucide="folder" style="width:15px;height:15px;color:#22d3ee"></i> Support</div>
+
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================
+     À PROPOS — présentation, parcours et objectifs.
+     Texte à gauche ; à droite 3 cartes (formation, alternance, objectif).
+     L'attribut "data-reveal" = la section apparaît en fondu à l'arrivée
+     à l'écran (animation gérée par l'IntersectionObserver dans le JS).
+============================================================ -->
+<section id="apropos" style="position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:90px clamp(16px,5vw,48px)">
+  <div data-reveal style="opacity:0;transform:translateY(26px);transition:opacity .7s,transform .7s;text-align:center">
+    <div style="font-family:'Space Mono',monospace;font-size:13px;color:#a78bfa;letter-spacing:2px;margin-bottom:10px">01 — À PROPOS</div>
+    <h2 style="font-family:'Space Grotesk';font-size:clamp(30px,4.5vw,46px);font-weight:700;margin:0 0 36px;letter-spacing:-1px">Un profil orienté infrastructure &amp; mobilité</h2>
+  </div>
+
+  <!-- Texte de présentation, centré. -->
+  <div data-reveal style="opacity:0;transform:translateY(26px);transition:opacity .7s .05s,transform .7s .05s;max-width:780px;margin:0 auto;text-align:center">
+    <p style="font-size:16px;line-height:1.8;color:#c4c4d8;margin:0 0 18px">Actuellement en BTS SIO option <strong style="color:#fff">SISR</strong>, je me passionne pour tout ce qui touche aux infrastructures : serveurs, réseaux, virtualisation et sécurisation des systèmes. En alternance chez B&amp;A Conseil, j'interviens au quotidien sur la gestion et le déploiement de flottes mobiles (MDM/UEM) et le support N1/N2.</p>
+    <p style="font-size:16px;line-height:1.8;color:#c4c4d8;margin:0">Mon objectif : devenir <strong style="color:#fff">Ingénieur systèmes &amp; réseaux</strong>, afin d'évoluer vers l'architecture d'infrastructure et la cybersécurité. J'aime concevoir des solutions robustes, documentées et sécurisées, du schéma réseau jusqu'à la mise en production.</p>
+  </div>
+
+  <!-- Deux encadrés "parcours" SOUS le texte : professionnel (gauche) et scolaire (droite).
+       Chaque encadré accueille une carte (alternance / formation) ; ajoutez d'autres
+       cartes du même type à l'intérieur pour compléter votre parcours. -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:48px">
+
+    <!-- PARCOURS PROFESSIONNEL -->
+    <div data-reveal style="opacity:0;transform:translateY(26px);transition:opacity .7s .12s,transform .7s .12s;padding:26px;border-radius:20px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(8px)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+        <i data-lucide="briefcase" style="width:20px;height:20px;color:#60a5fa"></i>
+        <h3 style="font-family:'Space Grotesk';font-size:13px;font-weight:600;letter-spacing:2px;color:#60a5fa;text-transform:uppercase;margin:0">Parcours professionnel</h3>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0">
+        <div style="padding:18px 20px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><div style="font-weight:600;font-size:14.5px;color:#fff">Éducatrice sportive</div><span style="font-family:'Space Mono',monospace;font-size:11px;color:#8888a4">Sept 2023 — Juin 2024</span></div>
+          <div style="font-size:13px;color:#9a9ab4;margin-top:4px">Bénévolat · Cergy Pontoise Football Club</div>
+        </div>
+        <!-- Flèche de transition vers l'expérience suivante (du plus ancien vers le plus récent). -->
+        <div style="display:flex;justify-content:center;padding:8px 0"><span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.3)"><i data-lucide="chevrons-down" style="width:17px;height:17px;color:#60a5fa"></i></span></div>
+        <div style="padding:18px 20px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><div style="font-weight:600;font-size:14.5px;color:#fff">Technicienne support informatique</div><span style="font-family:'Space Mono',monospace;font-size:11px;color:#8888a4">Nov 2025 — Avril 2026</span></div>
+          <div style="font-size:13px;color:#9a9ab4;margin-top:4px">Alternance · B&amp;A Conseil</div>
+        </div>
+        <!-- Évolution au sein de B&A Conseil -->
+        <div style="display:flex;justify-content:center;padding:8px 0"><span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.3)"><i data-lucide="chevrons-down" style="width:17px;height:17px;color:#60a5fa"></i></span></div>
+        <div style="padding:18px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(37,99,235,.16),rgba(34,211,238,.08));border:1px solid rgba(37,99,235,.25)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><div style="font-weight:600;font-size:14.5px;color:#fff">Support Système &amp; Mobilité</div><span style="font-family:'Space Mono',monospace;font-size:11px;color:#8888a4">Avril 2026 — Sept 2026</span></div>
+          <div style="font-size:13px;color:#9a9ab4;margin-top:4px">Montée en responsabilités &amp; gestion de projet</div>
+        </div>
+        <!-- ➕ Dupliquez un bloc ci-dessus (+ la flèche) pour ajouter une expérience. -->
+      </div>
+    </div>
+
+    <!-- PARCOURS SCOLAIRE -->
+    <div data-reveal style="opacity:0;transform:translateY(26px);transition:opacity .7s .18s,transform .7s .18s;padding:26px;border-radius:20px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(8px)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+        <i data-lucide="graduation-cap" style="width:20px;height:20px;color:#a78bfa"></i>
+        <h3 style="font-family:'Space Grotesk';font-size:13px;font-weight:600;letter-spacing:2px;color:#a78bfa;text-transform:uppercase;margin:0">Parcours scolaire</h3>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0">
+        <div style="padding:18px 20px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><div style="font-weight:600;font-size:14.5px;color:#fff">Baccalauréat général</div><span style="font-family:'Space Mono',monospace;font-size:11px;color:#8888a4">2022 — 2025</span></div>
+          <div style="font-size:13px;color:#9a9ab4;margin-top:4px">Spécialités : Physique-Chimie, Sciences &amp; Vie de la Terre</div>
+        </div>
+        <!-- Flèche de transition vers le diplôme suivant (du plus ancien vers le plus récent). -->
+        <div style="display:flex;justify-content:center;padding:8px 0"><span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.3)"><i data-lucide="chevrons-down" style="width:17px;height:17px;color:#a78bfa"></i></span></div>
+        <div style="padding:18px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(124,58,237,.16),rgba(37,99,235,.08));border:1px solid rgba(124,58,237,.25)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><div style="font-weight:600;font-size:14.5px;color:#fff">BTS SIO</div><span style="font-family:'Space Mono',monospace;font-size:11px;color:#b9a8e8">2025 — 2027</span></div>
+          <div style="font-size:13px;color:#9a9ab4;margin-top:4px">Option : Solutions d'Infrastructure, Systèmes &amp; Réseaux</div>
+        </div>
+        <div style="display:flex;justify-content:center;padding:8px 0"><span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.3)"><i data-lucide="chevrons-down" style="width:17px;height:17px;color:#a78bfa"></i></span></div>
+        <div style="padding:18px 20px;border-radius:16px;background:linear-gradient(135deg,rgba(124,58,237,.16),rgba(37,99,235,.08));border:1px solid rgba(124,58,237,.25)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><div style="font-weight:600;font-size:14.5px;color:#fff">Étude envisagée</div><span style="font-family:'Space Mono',monospace;font-size:11px;color:#b9a8e8">2027 - 2028</span></div>
+          <div style="font-size:13px;color:#9a9ab4;margin-top:4px">Licence professionnelle : Administration des systèmes &amp; des réseaux</div>
+        </div>
+        <!-- ➕ Dupliquez un bloc ci-dessus (+ la flèche) pour ajouter un diplôme. -->
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================
+     COMPÉTENCES — 4 cartes (Systèmes, Réseaux, Virtualisation, Cybersécurité).
+     Les cartes sont générées automatiquement à partir de la liste "skills"
+     (dans le JS) grâce à <sc-for> = "pour chaque élément de la liste, répète
+     ce gabarit". Chaque compétence devient une petite étiquette.
+============================================================ -->
+<section id="competences" style="position:relative;z-index:2;max-width:1200px;margin:0 auto;padding:90px clamp(16px,5vw,48px)">
+  <div data-reveal style="opacity:0;transform:translateY(26px);transition:opacity .7s,transform .7s;margin-bottom:42px">
+    <div style="font-family:'Space Mono',monospace;font-size:13px;color:#a78bfa;letter-spacing:2px;margin-bottom:10px">02 — COMPÉTENCES</div>
+    <h2 style="font-family:'Space Grotesk';font-size:clamp(30px,4.5vw,46px);font-weight:700;margin:0;letter-spacing:-1px">Compétences</h2>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(265px,1fr));gap:22px">
+    <sc-for list="{{ skills }}" as="cat" hint-placeholder-count="4">
+      <div data-reveal style="opacity:0;transform:translateY(26px);transition:opacity .65s,transform .65s;padding:28px;border-radius:20px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(8px);transition:transform .3s,border-color .3s,box-shadow .3s,opacity .65s" style-hover="transform:translateY(-6px);border-color:rgba(124,58,237,.4);box-shadow:0 20px 50px rgba(124,58,237,.18)">
+        <div style="width:50px;height:50px;border-radius:14px;background:{{ cat.bg }};display:flex;align-items:center;justify-content:center;margin-bottom:18px"><i data-lucide="{{ cat.icon }}" style="width:24px;height:24px;color:{{ cat.color }}"></i></div>
+        <h3 style="font-family:'Space Grotesk';font-size:18px;font-weight:600;margin:0 0 16px;color:#fff">{{ cat.title }}</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <sc-for list="{{ cat.items }}" as="it" hint-placeholder-count="5">
+            <span style="padding:6px 12px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:12.5px;color:#cfcfe0;font-weight:500">{{ it }}</span>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<!-- ============================================================
+     ALTERNANCE — présentée en "timeline" (ligne verticale + pastille).
+     La carte B&A Conseil liste les missions, générées depuis la liste
+     "missions" du JS (<sc-for>).
+============================================================ -->
+<section id="alternance" style="position:relative;z-index:2;max-width:980px;margin:0 auto;padding:90px clamp(16px,5vw,48px)">
+  <div data-reveal style="opacity:0;transform:translateY(26px);transition:opacity .7s,transform .7s;margin-bottom:46px">
+    <div style="font-family:'Space Mono',monospace;font-size:13px;color:#a78bfa;letter-spacing:2px;margin-bottom:10px">03 — ALTERNANCE</div>
+    <h2 style="font-family:'Space Grotesk';font-size:clamp(30px,4.5vw,46px);font-weight:700;margin:0;letter-spacing:-1px">Parcours en entreprise</h2>
+  </div>
+  <div style="position:relative;padding-left:34px">
+    <div style="position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:linear-gradient(180deg,#7C3AED,#2563EB,transparent)"></div>
+    <div data-reveal style="opacity:0;transform:translateY(26px);transition:opacity .7s,transform .7s;position:relative;margin-bottom:8px">
+      <div style="position:absolute;left:-34px;top:4px;width:16px;height:16px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#2563EB);box-shadow:0 0 0 5px rgba(124,58,237,.18)"></div>
+      <div style="padding:28px;border-radius:20px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(8px)">
+        <!-- En-tête de la carte : emplacement LOGO (au-dessus) + nom + sous-titre, et badge de période. -->
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:16px">
+          <div>
+            <!-- LOGO ENTREPRISE B&A Conseil (au-dessus du nom). -->
+            <div style="width:128px;height:128px;border-radius:18px;background:#ffffff url('images/logo-ba.png') center/contain no-repeat;border:1px solid rgba(255,255,255,.12);margin-bottom:14px"></div>
+            <h3 style="font-family:'Space Grotesk';font-size:20px;font-weight:600;margin:0;color:#fff">B&amp;A Conseil</h3>
+            <p style="font-size:13.5px;color:#a78bfa;font-weight:500;margin:3px 0 0">Alternante Support Système &amp; Mobilité</p>
+          </div>
+          <span style="padding:6px 13px;border-radius:100px;background:rgba(124,58,237,.13);border:1px solid rgba(124,58,237,.3);font-size:12.5px;font-weight:600;color:#c4b5fd">Nov. 2025 — Juil. 2027</span>
+        </div>
+
+        <!-- Présentation rapide de l'entreprise (texte à personnaliser). -->
+        <p style="font-size:14px;color:#c4c4d8;line-height:1.65;margin:0 0 16px">Entreprise spécialisée dans l'accompagnement technologique des entreprises, couvrant les services informatiques, les telecoms et la cybersécurité.</p>
+
+        <!-- 3 chiffres clés de l'entreprise — remplacez librement les valeurs. -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px">
+          <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07)">
+            <div style="font-size:10.5px;font-weight:600;letter-spacing:1px;color:#8888a4;text-transform:uppercase;margin-bottom:6px">Collaborateurs</div>
+            <div style="font-family:'Space Grotesk';font-size:17px;font-weight:700;color:#fff">10</div>
+          </div>
+          <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07)">
+            <div style="font-size:10.5px;font-weight:600;letter-spacing:1px;color:#8888a4;text-transform:uppercase;margin-bottom:6px">Chiffre d'affaires</div>
+            <div style="font-family:'Space Grotesk';font-size:17px;font-weight:700;color:#fff">1 M€</div>
+          </div>
+          <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07)">
+            <div style="font-size:10.5px;font-weight:600;letter-spacing:1px;color:#8888a4;text-transform:uppercase;margin-bottom:6px">Type de clients</div>
+            <div style="font-family:'Space Grotesk';font-size:17px;font-weight:700;color:#60a5fa">PME &amp; Grands Comptes</div>
+          </div>
+        </div>
+
+        <!-- PARTENAIRES & CLIENTS CLÉS — bandeau de logos qui défile en continu.
+             La liste "partners" (dans le JS) est affichée DEUX fois à la suite : pendant
+             que la 1re copie sort à gauche, la 2e prend le relais => défilement infini sans
+             coupure (animation lgMarquee). Pour mettre de VRAIS logos : remplacez le texte
+             {{ pt.name }} par une image, ex. <img src="images/logo-orange.png" ...>. -->
+        <div style="margin:2px 0 22px;padding:22px 20px;border-radius:16px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07)">
+          <div style="text-align:center;font-family:'Space Grotesk';font-size:12.5px;font-weight:600;letter-spacing:2px;color:#a78bfa;text-transform:uppercase;margin-bottom:18px">Partenaires &amp; clients clés</div>
+          <div id="lg-partners-viewport" style="position:relative;overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);mask:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)">
+            <div id="lg-partners-track" style="display:flex;width:max-content;animation:lgMarquee 50s linear infinite">
+              <sc-for list="{{ partners }}" as="pt" hint-placeholder-count="10">
+                <div style="{{ pt.slotStyle }}"><span style="{{ pt.nameStyle }}">{{ pt.name }}</span></div>
+              </sc-for>
+              <sc-for list="{{ partners }}" as="pt" hint-placeholder-count="10">
+                <div aria-hidden="true" style="{{ pt.slotStyle }}"><span style="{{ pt.nameStyle }}">{{ pt.name }}</span></div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <!-- MISSIONS CONFIÉES — même type d'encadré que "Partenaires & clients clés".
+             Les petits blocs (liste "missions" du JS) restent identiques, simplement
+             regroupés dans cet encadré avec un titre centré. -->
+        <div style="margin:2px 0 0;padding:22px 20px;border-radius:16px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07)">
+          <div style="text-align:center;font-family:'Space Grotesk';font-size:12.5px;font-weight:600;letter-spacing:2px;color:#a78bfa;text-transform:uppercase;margin-bottom:18px">Missions confiées</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px">
+            <sc-for list="{{ missions }}" as="m" hint-placeholder-count="6">
+              <div style="display:flex;gap:11px;align-items:flex-start;padding:13px 15px;border-radius:13px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)">
+                <i data-lucide="{{ m.icon }}" style="width:18px;height:18px;color:#60a5fa;flex:none;margin-top:1px"></i>
+                <div><div style="font-size:13.5px;font-weight:600;color:#e3e3f2">{{ m.title }}</div><div style="font-size:12.5px;color:#9a9ab4;margin-top:3px;line-height:1.5">{{ m.desc }}</div></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     PROJETS E5 — une grille de cartes cliquables.
+     Chaque carte vient de la liste "projects" (JS). Un clic ouvre une
+     fenêtre de détail (le MODAL, plus bas) avec le carrousel d'images.
+     La dernière case en pointillés est un emplacement pour un futur projet.
+============================================================ -->
+<section id="projets" style="position:relative;z-index:2;max-width:1200px;margin:0 auto;padding:90px clamp(16px,5vw,48px)">
+  <div data-reveal style="opacity:0;transform:translateY(26px);transition:opacity .7s,transform .7s;margin-bottom:42px">
+    <div style="font-family:'Space Mono',monospace;font-size:13px;color:#a78bfa;letter-spacing:2px;margin-bottom:10px">04 — PROJETS E5</div>
+    <h2 style="font-family:'Space Grotesk';font-size:clamp(30px,4.5vw,46px);font-weight:700;margin:0 0 8px;letter-spacing:-1px">Réalisations techniques</h2>
+    <p style="font-size:15px;color:#9a9ab4;margin:0;max-width:560px">Cliquez sur un projet pour afficher le contexte, les objectifs, les technologies et les compétences mobilisées.</p>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px">
+    <sc-for list="{{ projects }}" as="p" hint-placeholder-count="5">
+      <div data-reveal onClick="{{ p.open }}" style="opacity:0;transform:translateY(26px);transition:opacity .65s,transform .35s,border-color .3s,box-shadow .3s;border-radius:20px;overflow:hidden;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);cursor:pointer;display:flex;flex-direction:column" style-hover="transform:translateY(-7px);border-color:rgba(124,58,237,.45);box-shadow:0 24px 55px rgba(124,58,237,.2)">
+        <div style="position:relative;height:158px;background:{{ p.imgBg }};display:flex;align-items:center;justify-content:center;border-bottom:1px solid rgba(255,255,255,.06)">
+          <i data-lucide="{{ p.icon }}" style="{{ p.cardIconStyle }}"></i>
+          <span style="position:absolute;top:12px;left:12px;padding:5px 11px;border-radius:7px;background:rgba(7,7,15,.6);backdrop-filter:blur(6px);font-size:11px;font-weight:600;color:#e3e3f2;border:1px solid rgba(255,255,255,.12)">{{ p.tag }}</span>
+          <span style="position:absolute;bottom:10px;right:12px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,.55)">{{ p.imgLabel }}</span>
+        </div>
+        <div style="padding:22px;flex:1;display:flex;flex-direction:column">
+          <h3 style="font-family:'Space Grotesk';font-size:17.5px;font-weight:600;margin:0 0 8px;color:#fff">{{ p.title }}</h3>
+          <p style="font-size:13.5px;color:#9a9ab4;line-height:1.6;margin:0 0 16px;flex:1">{{ p.short }}</p>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <sc-for list="{{ p.topTech }}" as="t" hint-placeholder-count="3">
+                <span style="padding:4px 9px;border-radius:6px;background:rgba(124,58,237,.13);border:1px solid rgba(124,58,237,.25);font-size:11px;color:#c4b5fd;font-weight:500">{{ t }}</span>
+              </sc-for>
+            </div>
+            <i data-lucide="arrow-up-right" style="width:18px;height:18px;color:#a78bfa;flex:none"></i>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+    <div data-reveal style="opacity:0;transform:translateY(26px);transition:opacity .65s,transform .65s;border-radius:20px;border:1.5px dashed rgba(255,255,255,.14);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:240px;color:#7a7a96;padding:22px;text-align:center">
+      <i data-lucide="plus" style="width:30px;height:30px"></i>
+      <div style="font-size:13.5px;font-weight:500">Espace pour un futur projet</div>
+      <div style="font-family:'Space Mono',monospace;font-size:11px">// dupliquez une carte</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     TABLEAU DE SYNTHÈSE E5 — activités / compétences / preuves.
+     Les boutons en haut FILTRENT le tableau par catégorie (le filtre choisi
+     est mémorisé dans state.filter ; le JS ne garde que les lignes voulues).
+     Le bouton "PDF" de chaque ligne affichera un message tant qu'aucun
+     vrai document n'est lié (à remplacer par vos fichiers).
+============================================================ -->
+<section id="synthese" style="position:relative;z-index:2;max-width:1200px;margin:0 auto;padding:90px clamp(16px,5vw,48px)">
+  <div data-reveal style="opacity:0;transform:translateY(26px);transition:opacity .7s,transform .7s;margin-bottom:30px">
+    <div style="font-family:'Space Mono',monospace;font-size:13px;color:#a78bfa;letter-spacing:2px;margin-bottom:10px">05 — TABLEAU DE SYNTHÈSE</div>
+    <h2 style="font-family:'Space Grotesk';font-size:clamp(30px,4.5vw,46px);font-weight:700;margin:0 0 8px;letter-spacing:-1px">Activités &amp; compétences E5</h2>
+    <p style="font-size:15px;color:#9a9ab4;margin:0;max-width:560px">Synthèse des activités professionnelles, des compétences validées et des preuves associées.</p>
+  </div>
+  <div data-reveal style="opacity:0;transform:translateY(26px);transition:opacity .7s,transform .7s;display:flex;gap:9px;flex-wrap:wrap;margin-bottom:22px">
+    <sc-for list="{{ filters }}" as="f" hint-placeholder-count="6">
+      <button onClick="{{ f.set }}" style="padding:8px 16px;border-radius:100px;border:1px solid {{ f.border }};background:{{ f.bg }};color:{{ f.fg }};font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">{{ f.label }}</button>
+    </sc-for>
+  </div>
+  <div data-reveal style="opacity:0;transform:translateY(26px);transition:opacity .7s,transform .7s;border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025)">
+    <div style="display:grid;grid-template-columns:1.5fr 2fr 1.3fr .8fr;gap:0;padding:16px 20px;background:rgba(124,58,237,.1);border-bottom:1px solid rgba(255,255,255,.08);font-family:'Space Grotesk';font-size:12.5px;font-weight:600;color:#c4b5fd;letter-spacing:.4px;text-transform:uppercase">
+      <div>Activité professionnelle</div><div>Compétences validées</div><div>Contexte</div><div style="text-align:right">Doc.</div>
+    </div>
+    <sc-for list="{{ rows }}" as="r" hint-placeholder-count="7">
+      <div style="display:grid;grid-template-columns:1.5fr 2fr 1.3fr .8fr;gap:0;padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.05);align-items:center;transition:background .2s" style-hover="background:rgba(255,255,255,.025)">
+        <div style="padding-right:14px"><div style="font-size:14px;font-weight:600;color:#fff">{{ r.activite }}</div><span style="display:inline-block;margin-top:7px;padding:3px 9px;border-radius:6px;background:{{ r.catBg }};font-size:10.5px;font-weight:600;color:{{ r.catFg }}">{{ r.cat }}</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;padding-right:14px">
+          <sc-for list="{{ r.competences }}" as="c" hint-placeholder-count="2">
+            <span style="padding:4px 9px;border-radius:6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:11.5px;color:#cfcfe0">{{ c }}</span>
+          </sc-for>
+        </div>
+        <div style="font-size:12.5px;color:#9a9ab4;padding-right:10px;line-height:1.5">{{ r.preuve }}</div>
+        <div style="text-align:right"><button onClick="{{ r.download }}" title="Télécharger" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:9px;border:1px solid rgba(124,58,237,.3);background:rgba(124,58,237,.12);color:#c4b5fd;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s" style-hover="background:rgba(124,58,237,.25)"><i data-lucide="download" style="width:14px;height:14px"></i> PDF</button></div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<!-- ============================================================
+     VEILLE TECHNOLOGIQUE — sujet (sécurité des flottes mobiles / MDM).
+     À gauche : liste d'articles (liste "veilleArticles" du JS), chacun est
+     un lien externe. À droite : les outils de veille utilisés.
+============================================================ -->
+<section id="veille" style="position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:90px clamp(16px,5vw,48px)">
+  <div data-reveal style="opacity:0;transform:translateY(26px);transition:opacity .7s,transform .7s;margin-bottom:42px">
+    <div style="font-family:'Space Mono',monospace;font-size:13px;color:#a78bfa;letter-spacing:2px;margin-bottom:10px">06 — VEILLE TECHNOLOGIQUE</div>
+    <h2 style="font-family:'Space Grotesk';font-size:clamp(30px,4.5vw,46px);font-weight:700;margin:0;letter-spacing:-1px">L'utilisation du MFA pour sécuriser les accès en entreprise</h2>
+  </div>
+  <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:24px;align-items:start">
+    <div data-reveal style="opacity:0;transform:translateY(26px);transition:opacity .7s,transform .7s;display:flex;flex-direction:column;gap:14px">
+      <sc-for list="{{ veilleArticles }}" as="a" hint-placeholder-count="3">
+        <a href="{{ a.url }}" target="_blank" rel="noopener" style="text-decoration:none;display:flex;gap:16px;align-items:center;padding:20px 22px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);transition:transform .25s,border-color .25s" style-hover="transform:translateX(5px);border-color:rgba(124,58,237,.4)">
+          <div style="width:46px;height:46px;border-radius:12px;background:rgba(37,99,235,.14);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="{{ a.icon }}" style="width:21px;height:21px;color:#60a5fa"></i></div>
+          <div style="flex:1"><div style="font-size:11px;color:#7a7a96;font-family:'Space Mono',monospace;margin-bottom:4px">{{ a.source }} · {{ a.date }}</div><div style="font-size:14.5px;font-weight:600;color:#fff;line-height:1.4">{{ a.title }}</div></div>
+          <i data-lucide="arrow-up-right" style="width:18px;height:18px;color:#a78bfa;flex:none"></i>
+        </a>
+      </sc-for>
+    </div>
+    <div data-reveal style="opacity:0;transform:translateY(26px);transition:opacity .7s .08s,transform .7s .08s;padding:26px;border-radius:18px;background:linear-gradient(160deg,rgba(124,58,237,.13),rgba(37,99,235,.06));border:1px solid rgba(124,58,237,.22)">
+      <h3 style="font-family:'Space Grotesk';font-size:16px;font-weight:600;margin:0 0 16px;color:#fff;display:flex;align-items:center;gap:9px"><i data-lucide="rss" style="width:18px;height:18px;color:#a78bfa"></i> Outils de veille</h3>
+      <div style="display:flex;flex-direction:column;gap:11px">
+        <sc-for list="{{ veilleTools }}" as="t" hint-placeholder-count="5">
+          <div style="display:flex;align-items:center;gap:11px;font-size:13.5px;color:#cfcfe0"><span style="width:6px;height:6px;border-radius:50%;background:#a78bfa;flex:none"></span> {{ t }}</div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     CONTACT — formulaire (nom, email, message) + liens (LinkedIn, emails)
+     + bouton de téléchargement du CV.
+     L'envoi du formulaire est une DÉMO : il affiche un message de confirmation
+     (fonction submitForm) sans réellement envoyer d'email.
+============================================================ -->
+<section id="contact" style="position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:90px clamp(16px,5vw,48px) 60px">
+  <div data-reveal style="opacity:0;transform:translateY(26px);transition:opacity .7s,transform .7s;margin-bottom:42px">
+    <div style="font-family:'Space Mono',monospace;font-size:13px;color:#a78bfa;letter-spacing:2px;margin-bottom:10px">07 — CONTACT</div>
+    <h2 style="font-family:'Space Grotesk';font-size:clamp(30px,4.5vw,46px);font-weight:700;margin:0 0 8px;letter-spacing:-1px">Travaillons ensemble</h2>
+    <p style="font-size:15px;color:#9a9ab4;margin:0;max-width:520px">Une question, une opportunité d'alternance ou d'échange autour des infrastructures ? Écrivez-moi.</p>
+  </div>
+  <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:26px;align-items:start">
+    <form onSubmit="{{ submitForm }}" data-reveal style="opacity:0;transform:translateY(26px);transition:opacity .7s,transform .7s;padding:30px;border-radius:20px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(8px);display:flex;flex-direction:column;gap:16px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div><label style="font-size:12.5px;font-weight:600;color:#b9b9cf;display:block;margin-bottom:7px">Nom</label><input required placeholder="Votre nom" style="width:100%;padding:12px 14px;border-radius:11px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:14px;font-family:inherit;outline:none" style-focus="border-color:#7C3AED;background:rgba(124,58,237,.06)"></div>
+        <div><label style="font-size:12.5px;font-weight:600;color:#b9b9cf;display:block;margin-bottom:7px">Email</label><input required type="email" placeholder="vous@email.com" style="width:100%;padding:12px 14px;border-radius:11px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:14px;font-family:inherit;outline:none" style-focus="border-color:#7C3AED;background:rgba(124,58,237,.06)"></div>
+      </div>
+      <div><label style="font-size:12.5px;font-weight:600;color:#b9b9cf;display:block;margin-bottom:7px">Message</label><textarea required rows="5" placeholder="Votre message…" style="width:100%;padding:12px 14px;border-radius:11px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:14px;font-family:inherit;outline:none;resize:vertical" style-focus="border-color:#7C3AED;background:rgba(124,58,237,.06)"></textarea></div>
+      <button type="submit" style="display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#7C3AED,#2563EB);color:#fff;font-size:14.5px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 10px 30px rgba(124,58,237,.4);transition:transform .2s" style-hover="transform:translateY(-2px)"><i data-lucide="send" style="width:17px;height:17px"></i> Envoyer le message</button>
+    </form>
+    <div data-reveal style="opacity:0;transform:translateY(26px);transition:opacity .7s .08s,transform .7s .08s;display:flex;flex-direction:column;gap:13px">
+      <a href="https://www.linkedin.com/in/leila-gadou/" target="_blank" rel="noopener" style="text-decoration:none;display:flex;align-items:center;gap:14px;padding:18px 20px;border-radius:15px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);transition:transform .25s,border-color .25s" style-hover="transform:translateX(5px);border-color:rgba(37,99,235,.4)"><div style="width:42px;height:42px;border-radius:11px;background:rgba(37,99,235,.15);display:flex;align-items:center;justify-content:center;flex:none"><span style="font-family:'Space Grotesk';font-weight:700;font-size:15px;color:#60a5fa;line-height:1">in</span></div><div><div style="font-size:12px;color:#7a7a96">LinkedIn</div><div style="font-size:14px;font-weight:600;color:#fff">leila-gadou</div></div></a>
+      <a href="/cdn-cgi/l/email-protection#b2ded7dbded3f2d0d39fd1dddcc1d7dbde9cd4c0" style="text-decoration:none;display:flex;align-items:center;gap:14px;padding:18px 20px;border-radius:15px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);transition:transform .25s,border-color .25s" style-hover="transform:translateX(5px);border-color:rgba(124,58,237,.4)"><div style="width:42px;height:42px;border-radius:11px;background:rgba(124,58,237,.15);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="mail" style="width:20px;height:20px;color:#a78bfa"></i></div><div><div style="font-size:12px;color:#7a7a96">Email pro</div><div style="font-size:14px;font-weight:600;color:#fff"><span class="__cf_email__" data-cfemail="e8848d818489a88a89c58b87869b8d8184c68e9a">leila@ba-conseil.fr</span></div></div></a>
+      <a href="/cdn-cgi/l/email-protection#69050c000508470c1d1c0d0c1a1c19290e04080005470a0604" style="text-decoration:none;display:flex;align-items:center;gap:14px;padding:18px 20px;border-radius:15px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);transition:transform .25s,border-color .25s" style-hover="transform:translateX(5px);border-color:rgba(124,58,237,.4)"><div style="width:42px;height:42px;border-radius:11px;background:rgba(34,211,238,.13);display:flex;align-items:center;justify-content:center;flex:none"><i data-lucide="at-sign" style="width:20px;height:20px;color:#22d3ee"></i></div><div><div style="font-size:12px;color:#7a7a96">Email perso</div><div style="font-size:14px;font-weight:600;color:#fff"><span class="__cf_email__" data-cfemail="d0bcb5b9bcb1feb5a4a5b4b5a3a5a090b7bdb1b9bcfeb3bfbd">leila.etudesup@gmail.com</span></div></div></a>
+      <button onClick="{{ downloadCV }}" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:18px;border-radius:15px;border:1px solid rgba(124,58,237,.35);background:linear-gradient(135deg,rgba(124,58,237,.16),rgba(37,99,235,.1));color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:transform .2s" style-hover="transform:translateY(-2px)"><i data-lucide="file-down" style="width:18px;height:18px;color:#c4b5fd"></i> Télécharger mon CV (PDF)</button>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:70px;padding-top:30px;border-top:1px solid rgba(255,255,255,.06);font-size:13px;color:#6e6e88">© 2026 Leïla Gadou — Portfolio BTS SIO SISR · Épreuve E5</div>
+</section>
+
+<!-- ============================================================
+     MODAL PROJET = la fenêtre de détail qui s'ouvre au clic sur un projet.
+     <sc-if value="{{ modalOpen }}"> = "n'affiche ceci QUE si un projet est ouvert".
+     En haut : le CARROUSEL d'images (défile seul toutes les 10 s ; flèches,
+     points et bouton "Agrandir"). En dessous : contexte, objectifs,
+     technologies, compétences et résultats du projet.
+============================================================ -->
+<sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeModal }}" style="position:fixed;inset:0;z-index:300;background:rgba(5,5,12,.78);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:clamp(14px,4vw,48px);overflow-y:auto">
+    <div onClick="{{ stop }}" style="position:relative;width:100%;max-width:760px;max-height:90vh;overflow-y:auto;border-radius:24px;background:#0d0d1c;border:1px solid rgba(255,255,255,.1);box-shadow:0 40px 100px rgba(0,0,0,.7)">
+      <div style="position:relative;height:230px;overflow:hidden;background:#0a0a16">
+        <sc-for list="{{ m.slides }}" as="s" hint-placeholder-count="3">
+          <div onClick="{{ s.open }}" style="{{ s.style }}">
+            <i data-lucide="{{ m.icon }}" style="{{ s.iconStyle }}"></i>
+            <span style="position:absolute;bottom:0;left:0;right:0;padding:10px 16px;font-family:'Space Mono',monospace;font-size:11px;color:rgba(255,255,255,.92);background:linear-gradient(0deg,rgba(7,7,15,.82),transparent)">{{ s.label }}</span>
+          </div>
+        </sc-for>
+        <button onClick="{{ m.expand }}" aria-label="Agrandir l'image" style="{{ m.expandStyle }}"><i data-lucide="maximize-2" style="width:14px;height:14px"></i> Agrandir</button>
+        <button onClick="{{ prevSlide }}" aria-label="Image précédente" style="position:absolute;top:50%;left:12px;transform:translateY(-50%);width:38px;height:38px;border-radius:11px;border:1px solid rgba(255,255,255,.18);background:rgba(7,7,15,.55);backdrop-filter:blur(8px);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s" style-hover="background:rgba(124,58,237,.6)"><i data-lucide="chevron-left" style="width:20px;height:20px"></i></button>
+        <button onClick="{{ nextSlide }}" aria-label="Image suivante" style="position:absolute;top:50%;right:12px;transform:translateY(-50%);width:38px;height:38px;border-radius:11px;border:1px solid rgba(255,255,255,.18);background:rgba(7,7,15,.55);backdrop-filter:blur(8px);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s" style-hover="background:rgba(124,58,237,.6)"><i data-lucide="chevron-right" style="width:20px;height:20px"></i></button>
+        <span style="position:absolute;top:14px;left:14px;padding:5px 11px;border-radius:8px;background:rgba(7,7,15,.6);backdrop-filter:blur(6px);font-family:'Space Mono',monospace;font-size:11px;color:#e3e3f2;border:1px solid rgba(255,255,255,.12)">{{ m.slideCounter }}</span>
+        <div style="position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:7px;z-index:2">
+          <sc-for list="{{ m.dots }}" as="d" hint-placeholder-count="3">
+            <button onClick="{{ d.go }}" aria-label="Aller à l'image" style="{{ d.style }}"></button>
+          </sc-for>
+        </div>
+        <button onClick="{{ closeModal }}" style="position:absolute;top:14px;right:14px;width:38px;height:38px;border-radius:11px;border:1px solid rgba(255,255,255,.15);background:rgba(7,7,15,.6);backdrop-filter:blur(8px);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:3"><i data-lucide="x" style="width:19px;height:19px"></i></button>
+      </div>
+      <div style="padding:30px clamp(20px,4vw,38px) 38px">
+        <span style="display:inline-block;padding:5px 12px;border-radius:7px;background:rgba(124,58,237,.15);font-size:11.5px;font-weight:600;color:#c4b5fd;margin-bottom:12px">{{ m.tag }}</span>
+        <h3 style="font-family:'Space Grotesk';font-size:27px;font-weight:700;margin:0 0 20px;color:#fff;letter-spacing:-.5px">{{ m.title }}</h3>
+        <div style="margin-bottom:22px"><div style="font-size:12px;font-weight:700;color:#a78bfa;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Contexte</div><p style="font-size:14.5px;color:#c4c4d8;line-height:1.7;margin:0">{{ m.context }}</p></div>
+        <div style="margin-bottom:22px"><div style="font-size:12px;font-weight:700;color:#a78bfa;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Objectifs &amp; réalisations</div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <sc-for list="{{ m.objectives }}" as="o" hint-placeholder-count="4">
+              <div style="display:flex;gap:11px;align-items:flex-start;font-size:14px;color:#cfcfe0;line-height:1.55"><i data-lucide="check-circle-2" style="width:17px;height:17px;color:#34d399;flex:none;margin-top:2px"></i> {{ o }}</div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px">
+          <div><div style="font-size:12px;font-weight:700;color:#60a5fa;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Technologies</div><div style="display:flex;flex-wrap:wrap;gap:7px"><sc-for list="{{ m.tech }}" as="t" hint-placeholder-count="4"><span style="padding:5px 11px;border-radius:7px;background:rgba(37,99,235,.13);border:1px solid rgba(37,99,235,.25);font-size:12px;color:#93c5fd;font-weight:500">{{ t }}</span></sc-for></div></div>
+          <div><div style="font-size:12px;font-weight:700;color:#22d3ee;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Compétences mobilisées</div><div style="display:flex;flex-direction:column;gap:7px"><sc-for list="{{ m.competences }}" as="c" hint-placeholder-count="3"><div style="display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:#cfcfe0;line-height:1.45"><span style="width:5px;height:5px;border-radius:50%;background:#22d3ee;flex:none;margin-top:6px"></span> {{ c }}</div></sc-for></div></div>
+        </div>
+        <div style="margin-top:24px;padding:18px 20px;border-radius:14px;background:linear-gradient(135deg,rgba(52,211,153,.1),rgba(34,211,238,.05));border:1px solid rgba(52,211,153,.2)"><div style="font-size:12px;font-weight:700;color:#34d399;letter-spacing:1px;text-transform:uppercase;margin-bottom:7px">Résultats obtenus</div><p style="font-size:14px;color:#d7d7ea;line-height:1.65;margin:0">{{ m.results }}</p></div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<!-- ============================================================
+     LIGHTBOX = l'image en GRAND (plein écran), pour la montrer au jury.
+     S'ouvre en cliquant une image du carrousel ou le bouton "Agrandir".
+     Navigation : flèches à l'écran ou flèches du clavier ; fermeture par
+     clic, par la croix, ou avec la touche Échap (géré dans le JS).
+============================================================ -->
+<sc-if value="{{ lightboxOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeLightbox }}" style="position:fixed;inset:0;z-index:400;background:rgba(3,3,9,.95);backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:clamp(16px,3vw,56px);cursor:zoom-out">
+    <div onClick="{{ stopLb }}" style="{{ lightboxImgStyle }}"></div>
+    <div style="margin-top:16px;display:flex;align-items:center;gap:16px;font-family:'Space Mono',monospace;font-size:12.5px;color:#cfcfe0">
+      <span>{{ lightboxCounter }}</span>
+      <span style="color:#7a7a96">·</span>
+      <span>{{ lightboxLabel }}</span>
+    </div>
+    <button onClick="{{ lightboxPrev }}" aria-label="Précédente" style="position:absolute;top:50%;left:clamp(10px,3vw,40px);transform:translateY(-50%);width:48px;height:48px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(13,13,28,.7);backdrop-filter:blur(10px);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s" style-hover="background:rgba(124,58,237,.7)"><i data-lucide="chevron-left" style="width:24px;height:24px"></i></button>
+    <button onClick="{{ lightboxNext }}" aria-label="Suivante" style="position:absolute;top:50%;right:clamp(10px,3vw,40px);transform:translateY(-50%);width:48px;height:48px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(13,13,28,.7);backdrop-filter:blur(10px);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s" style-hover="background:rgba(124,58,237,.7)"><i data-lucide="chevron-right" style="width:24px;height:24px"></i></button>
+    <button onClick="{{ closeLightbox }}" aria-label="Fermer" style="position:absolute;top:clamp(14px,3vw,28px);right:clamp(14px,3vw,28px);width:46px;height:46px;border-radius:13px;border:1px solid rgba(255,255,255,.18);background:rgba(13,13,28,.7);backdrop-filter:blur(10px);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center"><i data-lucide="x" style="width:22px;height:22px"></i></button>
+  </div>
+</sc-if>
+
+<!-- TOAST = petit message temporaire en bas de l'écran (ex. "Message envoyé").
+     Il disparaît tout seul au bout de ~3 secondes (fonction notify). -->
+<sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:320;padding:14px 22px;border-radius:13px;background:rgba(13,13,28,.95);backdrop-filter:blur(10px);border:1px solid rgba(124,58,237,.4);color:#fff;font-size:13.5px;font-weight:500;box-shadow:0 16px 44px rgba(0,0,0,.5);display:flex;align-items:center;gap:10px"><i data-lucide="info" style="width:17px;height:17px;color:#a78bfa"></i> {{ toast }}</div>
+</sc-if>
+
+<!-- BOUTON "RETOUR EN HAUT" : apparaît après avoir scrollé (>500px) et
+     ramène en haut de la page au clic (fonction goTop). -->
+<button id="lg-top" onClick="{{ goTop }}" style="position:fixed;bottom:26px;right:26px;z-index:160;width:48px;height:48px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(13,13,28,.85);backdrop-filter:blur(10px);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s,transform .25s;box-shadow:0 12px 32px rgba(0,0,0,.4)" style-hover="transform:translateY(-3px)"><i data-lucide="arrow-up" style="width:20px;height:20px"></i></button>
+
+</x-dc>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="text/x-dc" data-dc-script>
+/* =====================================================================
+   LE CERVEAU (JavaScript)
+   ---------------------------------------------------------------------
+   Tout ce qui suit gère le comportement du site. Quelques notions :
+   - "state" = la MÉMOIRE du moment (projet ouvert ? quel filtre ? etc.).
+     Quand le state change (setState), l'affichage se met à jour tout seul.
+   - "this.props/state" = les données accessibles partout dans la classe.
+   - Les fonctions getProjects/getRows = les DONNÉES (à modifier pour
+     mettre à jour vos contenus).
+   - renderVals() (tout en bas) = la fonction qui FOURNIT au visuel toutes
+     les valeurs des {{ trous }}.
+===================================================================== */
+class Component extends DCLogic {
+  // MÉMOIRE du site à un instant donné :
+  //  modalIdx   = n° du projet ouvert dans le modal (null = aucun)
+  //  slide      = n° de l'image affichée dans le carrousel
+  //  lightboxIdx= n° de l'image affichée en grand (null = lightbox fermée)
+  //  filter     = catégorie choisie dans le tableau de synthèse ('all' = toutes)
+  //  toast      = texte du petit message en bas (vide = caché)
+  //  navOpen    = menu mobile ouvert ('true') ou fermé ('false')
+  state = { modalIdx: null, slide: 0, lightboxIdx: null, filter: 'all', toast: '', navOpen: 'false' };
+
+  // ---------- lightbox (vue agrandie) ----------
+  _curImgs() { const i = this.state.modalIdx; const ps = this.getProjects(); return (i != null && ps[i].images) ? ps[i].images : []; }
+  openLightbox(i) { clearInterval(this._slideIv); this.setState({ lightboxIdx: i }); }
+  closeLightbox() { this.setState({ lightboxIdx: null }); this._startCarousel(this._slideCount()); }
+  lightboxNav(d, e) { if (e) e.stopPropagation(); const n = this._curImgs().length; if (!n) return; this.setState(s => ({ lightboxIdx: (s.lightboxIdx + d + n) % n })); }
+
+  // ---------- CARROUSEL d'images du modal ----------
+  // _startCarousel lance un minuteur qui change d'image toutes les 10 000 ms (10 s).
+  // nextSlide/prevSlide/goSlide = navigation manuelle (et relancent le minuteur).
+  _slideCount() { const i = this.state.modalIdx; const ps = this.getProjects(); return (i != null && ps[i].images) ? ps[i].images.length : 1; }
+  _startCarousel(count) {
+    clearInterval(this._slideIv);
+    if (count > 1) this._slideIv = setInterval(() => this.setState(s => ({ slide: (s.slide + 1) % count })), 10000);
+  }
+  openProject(i) {
+    const ps = this.getProjects();
+    this.setState({ modalIdx: i, slide: 0 });
+    this._startCarousel(ps[i].images ? ps[i].images.length : 1);
+  }
+  nextSlide() { const c = this._slideCount(); this.setState(s => ({ slide: (s.slide + 1) % c })); this._startCarousel(c); }
+  prevSlide() { const c = this._slideCount(); this.setState(s => ({ slide: (s.slide - 1 + c) % c })); this._startCarousel(c); }
+  goSlide(i) { this.setState({ slide: i }); this._startCarousel(this._slideCount()); }
+
+  // ========================================================
+  // ⬇⬇⬇  VOS DONNÉES — C'EST ICI QU'ON MODIFIE LES CONTENUS  ⬇⬇⬇
+  // ========================================================
+  // Liste des PROJETS. Pour ajouter un projet : copiez un bloc { ... }
+  // entier (entre accolades) et adaptez les textes. Champs principaux :
+  //  title=titre, tag=étiquette, short=résumé carte, imgBg=fond de la carte,
+  //  images=[...] le carrousel (src='chemin/image.png' pour une vraie photo,
+  //  ou bg='dégradé' pour un fond de couleur), context/objectives/tech/
+  //  competences/results = le détail affiché dans le modal.
+  getProjects() {
+    return [
+      {
+        title: "Projet P&B — Mobilité d'entreprise", tag: "Alternance · Travail",
+        icon: "smartphone", imgLabel: "// capture interface Atlas / Miradore",
+        imgBg: "#0b0b18 url('images/pb-cover.jpg') center/cover",
+        images: [
+          { src: "images/pb-atlas.png", label: "Atlas Unyc — lignes mobiles Orange" },
+          { src: "images/pb-crm.png", label: "CRM support — tickets & demandes" },
+          { src: "images/pb-miradore.png", label: "Miradore — dashboard MDM" },
+          { src: "images/pb-miradore-device.png", label: "Miradore — fiche terminal Android" }
+        ],
+        short: "Déploiement de lignes mobiles Orange, de routeurs Huawei AR617VW LTE et enrôlement MDM d'une flotte Android.",
+        topTech: ["Atlas", "Miradore", "Android"],
+        context: "Pour le client P&B, gestion complète du cycle de vie des terminaux mobiles : de la commande des lignes Orange jusqu'à l'enrôlement et la configuration à distance via une solution MDM.",
+        objectives: [
+          "Déploiement et configuration de lignes mobiles Orange (forfait, data, hors-forfait, options, roaming) via l'interface Atlas d'Unyc.",
+          "Enrôlement et déploiement à distance de configurations, applications et restrictions sur terminaux Android via le MDM Miradore.",
+          "Configurations et déploiement de routeurs Huawei AR617VW LTE au sein des crèches",
+          "Rédaction des procédures destinées aux administrateurs et techniciens.",
+          "Support écrit, hotline et assistance aux utilisateurs pour la configuration de leurs terminaux."
+        ],
+        tech: ["Atlas", "MDM Miradore", "Android Enterprise", "LAN"],
+        competences: ["Mettre à disposition un service", "Gérer le patrimoine informatique", "Répondre aux incidents et demandes"],
+        results: "Flotte mobile déployée et administrée à distance, procédures documentées réutilisables et réduction du temps de traitement des demandes utilisateurs."
+      },
+      {
+        title: "Projet Ecobat Solutions — Infra complète", tag: "Cours",
+        icon: "network", imgLabel: "// VLANs · Proxmox · AD",
+        imgBg: "#0b0b18 url('images/logo-lpv.png') center/cover",
+        images: [
+          { bg: "linear-gradient(135deg,#7c3aed,#2563eb)", label: "// schéma réseau — 5 VLANs" },
+          { bg: "linear-gradient(135deg,#6d28d9,#0e7490)", label: "// Proxmox — VM AD / DHCP / DNS" },
+          { bg: "linear-gradient(135deg,#5b21b6,#1d4ed8)", label: "// configuration switch L3" }
+        ],
+        short: "Infrastructure 5 VLANs, firewall, Wi-Fi Aruba, switch L2/L3 et serveur Proxmox (DHCP/DNS/AD).",
+        topTech: ["VLAN", "Proxmox", "Active Directory"],
+        context: "Conception et déploiement d'une infrastructure réseau et système complète pour l'entreprise fictive Ecobat Solutions, segmentée par services.",
+        objectives: [
+          "Infrastructure réseau avec 5 VLANs : Visiteurs, Accueil, Management, Serveurs, Direction/RH.",
+          "Manipulation d'un firewall Zyxel et configuration d'une borne Wi-Fi Aruba.",
+          "Configuration switch L2 (PoE, VLANs, mot de passe enable) et switch L3 (VLANs, routes IP, relais DHCP).",
+          "Serveur Proxmox hébergeant les VM DHCP, DNS et Active Directory.",
+          "Configuration DHCP par VLAN, DNS, et AD (GPO, utilisateurs, profils itinérants)."
+        ],
+        tech: ["VLAN", "Switch L2/L3", "Proxmox", "Active Directory", "DHCP", "DNS", "GPO", "Zyxel", "Aruba"],
+        competences: ["Concevoir une solution d'infrastructure réseau", "Installer et configurer des services", "Sécuriser une infrastructure"],
+        results: "Infrastructure multi-VLAN opérationnelle et sécurisée, services centralisés (AD/DHCP/DNS) virtualisés sous Proxmox, gestion des accès par profils."
+      },
+      {
+        title: "X — X", tag: "Alternance · Travail",
+        icon: "refresh-cw", imgLabel: "// MobiControl / SOTI",
+        imgBg: "#0b0b18 url('') center/cover",
+        images: [
+          { bg: "linear-gradient(135deg,#6d28d9,#1d4ed8)", label: "// migration IBM → SOTI" },
+          { bg: "linear-gradient(135deg,#5b21b6,#1e40af)", label: "// console MobiControl" },
+          { bg: "linear-gradient(135deg,#4c1d95,#0e7490)", label: "// démo client" }
+        ],
+        short: "Migration de la flotte mobile du MDM IBM vers SOTI MobiControl, avec démonstration.",
+        topTech: ["SOTI MobiControl", "MDM IBM", "Migration"],
+        context: "Accompagnement du client OHS dans le changement de solution de gestion de sa flotte mobile.",
+        objectives: [
+          "Migration de la flotte mobile, actuellement sur le MDM IBM, vers le MDM MobiControl de SOTI.",
+          "Démonstration du logiciel MobiControl auprès du client."
+        ],
+        tech: ["SOTI MobiControl", "IBM MaaS360", "MDM / UEM"],
+        competences: ["Mettre à disposition un service", "Conduire un projet", "Accompagner le changement"],
+        results: "Transition vers la nouvelle solution MDM préparée et démontrée, garantissant la continuité de la gestion du parc mobile."
+      },
+      {
+        title: "Projet JouéClub — Connectivité 4G", tag: "Alternance · Travail",
+        icon: "wifi", imgLabel: "// routeur 4G · Herblay",
+        imgBg: "#0b0b18 url('images/logo_joueclub.jpeg') center/cover",
+        images: [
+          { bg: "linear-gradient(135deg,#1d4ed8,#0891b2)", label: "// routeur 4G installé" },
+          { bg: "linear-gradient(135deg,#2563eb,#0e7490)", label: "// configuration adressage IP" },
+          { bg: "linear-gradient(135deg,#1e40af,#0891b2)", label: "// magasin Herblay" }
+        ],
+        short: "Installation et configuration d'un routeur 4G dans un magasin JouéClub à Herblay.",
+        topTech: ["Routeur 4G", "Adressage IP"],
+        context: "Intervention terrain pour assurer la connectivité d'un point de vente JouéClub à Herblay.",
+        objectives: [
+          "Configuration d'une SIM Orange Data Only",
+          "Configuration d'un routeur 4G Huawei AR617VW LTE",
+          "Installation du routeur 4G sur site",
+          "Configuration de l'adressage IP et des paramètres réseau pour la mise en service."
+        ],
+        tech: ["Routeur 4G", "Adressage IP", "Réseau LAN"],
+        competences: ["Installer un équipement réseau", "Répondre aux incidents et demandes"],
+        results: "Magasin connecté et opérationnel, connectivité de secours/principale assurée via la liaison 4G."
+      },
+      {
+        title: "Test — Connectivité 4G", tag: "Alternance · Travail",
+        icon: "wifi", imgLabel: "// routeur 4G · Herblay",
+        imgBg: "linear-gradient(135deg,#1d4ed8,#0891b2)",
+        images: [
+          { bg: "linear-gradient(135deg,#1d4ed8,#0891b2)", label: "// routeur 4G installé" },
+          { bg: "linear-gradient(135deg,#2563eb,#0e7490)", label: "// configuration adressage IP" },
+          { bg: "linear-gradient(135deg,#1e40af,#0891b2)", label: "// magasin Herblay" }
+        ],
+        short: "Installation et configuration d'un routeur 4G dans un magasin JouéClub à Herblay.",
+        topTech: ["Routeur 4G", "Adressage IP"],
+        context: "Intervention terrain pour assurer la connectivité d'un point de vente JouéClub à Herblay.",
+        objectives: [
+          "Installation d'un routeur 4G sur site.",
+          "Configuration de l'adressage IP et des paramètres réseau pour la mise en service."
+        ],
+        tech: ["Routeur 4G", "Adressage IP", "Réseau LAN"],
+        competences: ["Installer un équipement réseau", "Répondre aux incidents et demandes"],
+        results: "Magasin connecté et opérationnel, connectivité de secours/principale assurée via la liaison 4G."
+      }
+    ];
+  }
+
+  // Lignes du TABLEAU DE SYNTHÈSE E5. "cat" = catégorie (sert au filtre),
+  // "k" = code couleur de la catégorie (voir catStyle ci-dessous).
+  getRows() {
+    return [
+      { activite: "Administration MDM/UEM", cat: "Systèmes", competences: ["Mettre à disposition un service", "Gérer le patrimoine"], preuve: "Procédures Miradore & MobiControl", k: "sys" },
+      { activite: "Support N1/N2", cat: "Support", competences: ["Répondre aux incidents", "Assistance utilisateurs"], preuve: "Tickets & fiches KB", k: "sup" },
+      { activite: "Conception réseau (VLAN/subnetting)", cat: "Réseaux", competences: ["Concevoir une infrastructure réseau"], preuve: "Schémas Atlas & Ecobat", k: "res" },
+      { activite: "Administration AD / DHCP / DNS", cat: "Systèmes", competences: ["Installer & configurer des services"], preuve: "Synthèse Ecobat (Proxmox)", k: "sys" },
+      { activite: "Sécurisation d'infrastructure", cat: "Cybersécurité", competences: ["Sécuriser une infra", "Gérer les accès"], preuve: "Config firewall & ACL, RGPD", k: "cyber" },
+      { activite: "Suivi d'inventaire & conformité", cat: "Gestion", competences: ["Gérer le patrimoine informatique"], preuve: "Exports IMEI/SN, reporting", k: "ges" },
+      { activite: "Gestion de projet (chef de projet)", cat: "Gestion", competences: ["Travailler en mode projet", "Organiser son dev. pro."], preuve: "Livrables & planning d'équipe", k: "ges" }
+    ];
+  }
+
+  // Donne la couleur (fond + texte) de l'étiquette de catégorie du tableau,
+  // selon le code "k" : sys=violet, sup=cyan, res=bleu, cyber=rose, ges=vert.
+  catStyle(k) {
+    const map = {
+      sys: ["rgba(124,58,237,.18)", "#c4b5fd"], sup: ["rgba(34,211,238,.16)", "#67e8f9"],
+      res: ["rgba(37,99,235,.18)", "#93c5fd"], cyber: ["rgba(244,63,94,.16)", "#fda4af"],
+      ges: ["rgba(52,211,153,.16)", "#6ee7b7"]
+    };
+    return map[k] || map.sys;
+  }
+
+  // ---------- PETITES FONCTIONS UTILITAIRES ----------
+  // scrollTo = fait défiler en douceur jusqu'à une section (et ferme le menu mobile).
+  // notify   = affiche un message "toast" pendant ~2,8 secondes.
+  scrollTo(id) {
+    const el = document.getElementById(id);
+    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 56, behavior: 'smooth' });
+    this.setState({ navOpen: 'false' });
+  }
+  notify(msg) {
+    this.setState({ toast: msg });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ toast: '' }), 2800);
+  }
+
+  // Appelée à chaque mise à jour de l'affichage : redessine les icônes Lucide
+  // (sinon les nouvelles icônes apparues resteraient vides).
+  componentDidUpdate() { if (window.lucide) window.lucide.createIcons(); }
+
+  // componentDidMount = exécutée UNE FOIS, au tout premier affichage de la page.
+  // On y "branche" tout ce qui réagit dans le temps :
+  //  - le rafraîchissement des icônes,
+  //  - la barre de progression + l'opacité de la barre de nav + le bouton retour
+  //    en haut + le lien de menu actif (fonction onScroll, à chaque défilement),
+  //  - l'apparition en fondu des sections (IntersectionObserver),
+  //  - le curseur lumineux qui suit la souris,
+  //  - le clavier (Échap/flèches pour la lightbox),
+  //  - les particules animées du fond (initParticles).
+  componentDidMount() {
+    const refreshIcons = () => { if (window.lucide) window.lucide.createIcons(); };
+    refreshIcons();
+    if (!window.lucide) {
+      let n = 0; const iv = setInterval(() => { if (window.lucide) { refreshIcons(); clearInterval(iv); } else if (++n > 40) clearInterval(iv); }, 150);
+    }
+
+    const onScroll = () => {
+      const d = document.documentElement;
+      const sc = window.scrollY || d.scrollTop;
+      const max = d.scrollHeight - d.clientHeight;
+      const bar = document.getElementById('lg-progress');
+      if (bar) bar.style.width = (max > 0 ? sc / max * 100 : 0) + '%';
+      const nav = document.getElementById('lg-nav');
+      if (nav) {
+        if (sc > 30) { nav.style.background = 'rgba(7,7,15,.82)'; nav.style.boxShadow = '0 8px 30px rgba(0,0,0,.35)'; nav.style.borderColor = 'rgba(255,255,255,.09)'; }
+        else { nav.style.background = 'rgba(7,7,15,.35)'; nav.style.boxShadow = 'none'; nav.style.borderColor = 'rgba(255,255,255,.06)'; }
+      }
+      const top = document.getElementById('lg-top');
+      if (top) { const on = sc > 500; top.style.opacity = on ? '1' : '0'; top.style.pointerEvents = on ? 'auto' : 'none'; }
+      // active nav link
+      const ids = ['accueil', 'apropos', 'competences', 'alternance', 'projets', 'synthese', 'veille', 'contact'];
+      let cur = ids[0];
+      for (const id of ids) { const e = document.getElementById(id); if (e && e.getBoundingClientRect().top <= 120) cur = id; }
+      document.querySelectorAll('[data-navlink]').forEach(a => {
+        const on = a.getAttribute('data-navlink') === cur;
+        a.style.color = on ? '#fff' : '#b9b9cf';
+        a.style.background = on ? 'rgba(124,58,237,.16)' : 'transparent';
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    this._onScroll = onScroll; onScroll();
+
+    // reveal on scroll — se déclenche tôt (avant l'entrée à l'écran)
+    const reveal = (el) => { el.style.opacity = '1'; el.style.transform = 'none'; };
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { reveal(e.target); io.unobserve(e.target); } });
+    }, { threshold: 0, rootMargin: '0px 0px -90px 0px' });
+    document.querySelectorAll('[data-reveal]').forEach(el => io.observe(el));
+    this._io = io;
+    // sécurité : ne jamais laisser une section masquée si elle est dans/proche de l'écran
+    this._revealSafety = () => {
+      document.querySelectorAll('[data-reveal]').forEach(el => {
+        if (el.style.opacity !== '1' && el.getBoundingClientRect().top < window.innerHeight - 90) { reveal(el); io.unobserve(el); }
+      });
+    };
+    window.addEventListener('scroll', this._revealSafety, { passive: true });
+    this._revealSafety();
+
+    // cursor glow
+    const cur = document.getElementById('lg-cursor'), dot = document.getElementById('lg-cursor-dot');
+    const onMove = (ev) => {
+      if (cur) cur.style.transform = `translate(${ev.clientX}px,${ev.clientY}px)`;
+      if (dot) dot.style.transform = `translate(${ev.clientX}px,${ev.clientY}px)`;
+    };
+    window.addEventListener('mousemove', onMove, { passive: true });
+    this._onMove = onMove;
+
+    const onKey = (e) => {
+      if (this.state.lightboxIdx == null) return;
+      if (e.key === 'Escape') this.closeLightbox();
+      else if (e.key === 'ArrowRight') this.lightboxNav(1);
+      else if (e.key === 'ArrowLeft') this.lightboxNav(-1);
+    };
+    window.addEventListener('keydown', onKey);
+    this._onKey = onKey;
+
+    // particle network
+    this.initParticles();
+  }
+
+  // Appelée quand le composant disparaît : on "débranche" proprement les
+  // écouteurs et minuteurs pour ne pas consommer de mémoire inutilement.
+  componentWillUnmount() {
+    clearInterval(this._slideIv);
+    window.removeEventListener('keydown', this._onKey);
+    window.removeEventListener('scroll', this._onScroll);
+    window.removeEventListener('scroll', this._revealSafety);
+    window.removeEventListener('mousemove', this._onMove);
+    if (this._io) this._io.disconnect();
+    if (this._raf) cancelAnimationFrame(this._raf);
+    window.removeEventListener('resize', this._onResize);
+  }
+
+  // Dessine et anime les PARTICULES du fond (les points reliés). Recalcule
+  // le nombre de points selon la taille de l'écran ; tourne en boucle (requestAnimationFrame).
+  initParticles() {
+    const cv = document.getElementById('lg-particles');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    let W, H, pts = [];
+    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+    const resize = () => {
+      W = cv.clientWidth; H = cv.clientHeight;
+      cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      const count = Math.min(64, Math.floor(W * H / 26000));
+      pts = Array.from({ length: count }, () => ({
+        x: Math.random() * W, y: Math.random() * H,
+        vx: (Math.random() - .5) * .35, vy: (Math.random() - .5) * .35
+      }));
+    };
+    resize();
+    this._onResize = resize;
+    window.addEventListener('resize', resize);
+    const loop = () => {
+      ctx.clearRect(0, 0, W, H);
+      for (const p of pts) {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0 || p.x > W) p.vx *= -1;
+        if (p.y < 0 || p.y > H) p.vy *= -1;
+      }
+      for (let i = 0; i < pts.length; i++) {
+        for (let j = i + 1; j < pts.length; j++) {
+          const a = pts[i], b = pts[j];
+          const dx = a.x - b.x, dy = a.y - b.y, dist = Math.hypot(dx, dy);
+          if (dist < 130) {
+            ctx.strokeStyle = `rgba(124,92,237,${(1 - dist / 130) * 0.22})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+          }
+        }
+      }
+      for (const p of pts) {
+        ctx.fillStyle = 'rgba(150,130,250,.55)';
+        ctx.beginPath(); ctx.arc(p.x, p.y, 1.6, 0, 6.283); ctx.fill();
+      }
+      this._raf = requestAnimationFrame(loop);
+    };
+    loop();
+  }
+
+  // renderVals = LE PONT entre le cerveau et le visuel. Elle prépare et
+  // renvoie toutes les valeurs attendues par les {{ trous }} du HTML :
+  // les listes (skills, missions, projects, rows...), les textes, et les
+  // fonctions appelées au clic (ouvrir un projet, filtrer, envoyer le formulaire...).
+  renderVals() {
+    const projects = this.getProjects();
+    const navData = [
+      ['apropos', 'À propos'], ['competences', 'Compétences'], ['alternance', 'Alternance'],
+      ['projets', 'Projets'], ['synthese', 'Synthèse E5'], ['veille', 'Veille'], ['contact', 'Contact']
+    ];
+    const navItems = navData.map(([id, label]) => ({ id, label, go: (e) => { e.preventDefault(); this.scrollTo(id); } }));
+
+    const skills = [
+      { title: "Administration systèmes", icon: "server", color: "#a78bfa", bg: "rgba(124,58,237,.15)",
+        items: ["Windows Server", "Windows 7/10/11", "Linux (Debian, Ubuntu Server)", "iOS / macOS", "Android", "Hyperviseur : Proxmox, VirtualBox"] },
+      { title: "Réseaux", icon: "network", color: "#60a5fa", bg: "rgba(37,99,235,.15)",
+        items: ["LAN / VLAN", "Routage", "DHCP", "DNS", "Switch L2/L3", "Wi-Fi", "Liaisons 45/5G", "SSH"] },
+      { title: "Cybersécurité", icon: "shield-check", color: "#f9a8d4", bg: "rgba(244,63,94,.13)",
+        items: ["Sécurisation d'infrastructures", "Gestion des accès", "Sauvegardes", "Pare-feu", "ACL", "RGPD"] },
+      {
+        title: "Support & Gestion de patrimoine", icon:"briefcase-business", color: "#80F222", bg: "rgba(109, 214, 119,.15)",
+        items: ["Support N1/N2", "Reporting", "Documentations techniques"]
+      }
+    ];
+
+    // PARTENAIRES & CLIENTS CLÉS affichés dans le bandeau défilant (carte B&A Conseil).
+    // Pour ajouter un partenaire : ajoutez { name: "..." } (chip texte) ou
+    // { name: "...", src: "images/mon-logo.png" } pour afficher une vraie image de logo.
+    const partnersData = [      
+      { name: "People&baby", src: "images/logo-peopleandbaby.png" },
+      { name: "SOTI", src: "images/logo_soti.png" },     
+      { name: "Le Studio Led", src: "images/logo_lsl.png"},
+      { name: "Fondation Santé Services", src: "images/logo_fss.png" },
+      { name: "Hyundai", src: "images/logo_hyundai.png" },
+      { name: "Groupe Galeries Lafayette", src: "images/logo_ggl.png" },
+      { name: "OFII", src: "images/logo_ofii.png" },
+      { name: "Ministère des outre-mer", src: "images/logo_mdom.png" },
+      { name: "Securinfor", src: "images/logo_securinfor.png" },
+      { name: "Econocom", src: "images/logo_econocom.png" }
+    ];
+    const partners = partnersData.map(p => {
+      const base = 'flex:none;width:248px;height:108px;margin-right:16px;border-radius:13px;display:flex;align-items:center;justify-content:center;text-align:center;';
+      if (p.src) {
+        // Tuile claire affichant le logo EN ENTIER (contain = image complète, sans rognage).
+        return { name: p.name, nameStyle: 'display:none',
+          slotStyle: base + "background:#ffffff url('" + p.src + "') center/contain no-repeat;background-size:88% auto;border:1px solid rgba(255,255,255,.10);" };
+      }
+      // Chip texte par défaut (en attendant un logo image).
+      return { name: p.name, nameStyle: '',
+        slotStyle: base + "background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);padding:0 14px;color:#cfcfe0;font-family:'Space Grotesk';font-size:14px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;" };
+    });
+
+    const missions = [      
+      { icon: "users", title: "Gestion de projet", desc: "Chef de projet : pilotage des équipes sur différents projets." },
+      { icon: "headphones", title: "Support N1/N2", desc: "Diagnostic, résolution et escalade des incidents (postes, terminaux, accès réseau)." },
+      { icon: "network", title: "Réseau", desc: "Configurations réseaux (LAN, VLAN, WLAN, ACL, QoS, PoE), supervision, mises à jour." },
+      { icon: "smartphone", title: "Onboarding MDM/UEM", desc: "Android Enterprise, iOS/iPadOS, Windows Modern, Linux : profils, sécurité, applications." },
+      { icon: "clipboard-check", title: "Inventaire & conformité", desc: "Traçabilité IMEI/SN, contrôles de version, conformité RGPD." },
+      { icon: "file-text", title: "Documentation", desc: "Procédures pas à pas, fiches KB, checklists et schémas." },
+      { icon: "bar-chart-3", title: "Reporting", desc: "Exports CSV/Excel, indicateurs SLA, parc, incidents, synthèses." },
+    ];
+
+    const filterDefs = [
+      ['all', 'Toutes'], ['Systèmes', 'Systèmes'], ['Réseaux', 'Réseaux'],
+      ['Cybersécurité', 'Cybersécurité'], ['Support', 'Support'], ['Gestion', 'Gestion']
+    ];
+    const filters = filterDefs.map(([id, label]) => {
+      const on = this.state.filter === id;
+      return {
+        label, set: () => this.setState({ filter: id }),
+        bg: on ? 'linear-gradient(135deg,#7C3AED,#2563EB)' : 'rgba(255,255,255,.04)',
+        fg: on ? '#fff' : '#b9b9cf',
+        border: on ? 'transparent' : 'rgba(255,255,255,.12)'
+      };
+    });
+
+    const rows = this.getRows()
+      .filter(r => this.state.filter === 'all' || r.cat === this.state.filter)
+      .map(r => {
+        const cs = this.catStyle(r.k);
+        return { ...r, catBg: cs[0], catFg: cs[1], download: () => this.notify('Document à ajouter — remplacez ce lien par votre PDF.') };
+      });
+
+    const veilleArticles = [
+      { source: "ANSSI", date: "2026", title: "Recommandations pour la sécurisation des flottes mobiles en entreprise", icon: "shield-alert", url: "https://cyber.gouv.fr/" },
+      { source: "LeMagIT", date: "2026", title: "MDM vs UEM : quelle stratégie pour gérer un parc hétérogène ?", icon: "smartphone", url: "https://www.lemagit.fr/" },
+      { source: "Android Enterprise", date: "2026", title: "Nouveautés Android Enterprise & modèle Zero Trust mobile", icon: "lock", url: "https://www.android.com/enterprise/" }
+    ];
+    const veilleTools = ["Feedly (flux RSS)", "Bulletins CERT-FR / ANSSI", "LinkedIn & newsletters spécialisées", "Blogs éditeurs (SOTI, Miradore)", "Veille Google Alertes"];
+
+    const idx = this.state.modalIdx;
+    const modalOpen = idx !== null;
+    let m = {};
+    if (modalOpen) {
+      const proj = projects[idx];
+      const imgs = proj.images && proj.images.length ? proj.images : [{ bg: proj.imgBg, label: proj.imgLabel }];
+      const cur = Math.min(this.state.slide, imgs.length - 1);
+      const curHasImg = imgs[cur] && !!imgs[cur].src;
+      m = Object.assign({}, proj, {
+        slideCounter: (cur + 1) + ' / ' + imgs.length,
+        expandStyle: 'position:absolute;top:14px;right:60px;display:' + (curHasImg ? 'inline-flex' : 'none') + ';align-items:center;gap:6px;padding:7px 12px;border-radius:9px;border:1px solid rgba(255,255,255,.15);background:rgba(7,7,15,.6);backdrop-filter:blur(8px);color:#fff;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;z-index:3',
+        expand: () => this.openLightbox(cur),
+        slides: imgs.map((im, i) => {
+          const bg = im.src ? ('#0b0b18 url("' + im.src + '") center/contain no-repeat') : im.bg;
+          const clickable = (i === cur) && !!im.src;
+          return {
+            label: im.label,
+            iconStyle: im.src ? 'display:none' : 'width:46px;height:46px;color:rgba(255,255,255,.85)',
+            open: im.src ? () => this.openLightbox(i) : (() => {}),
+            style: 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:' + bg + ';transition:opacity .7s ease;opacity:' + (i === cur ? '1' : '0') + ';pointer-events:' + (clickable ? 'auto' : 'none') + ';cursor:' + (clickable ? 'zoom-in' : 'default')
+          };
+        }),
+        dots: imgs.map((im, i) => ({
+          go: () => this.goSlide(i),
+          style: 'width:' + (i === cur ? '24px' : '8px') + ';height:8px;border-radius:99px;border:none;cursor:pointer;padding:0;transition:all .3s;background:' + (i === cur ? '#fff' : 'rgba(255,255,255,.45)')
+        }))
+      });
+    }
+
+    const lbImgs = this._curImgs();
+    const lbOpen = this.state.lightboxIdx != null && lbImgs.length > 0;
+    const lbI = lbOpen ? Math.min(this.state.lightboxIdx, lbImgs.length - 1) : 0;
+    const lbSrc = lbOpen && lbImgs[lbI] ? (lbImgs[lbI].src || '') : '';
+    const lbLabel = lbOpen && lbImgs[lbI] ? (lbImgs[lbI].label || '') : '';
+    // Style de l'image agrandie : div à image de fond (évite une <img> au src vide).
+    const lightboxImgStyle = 'width:95vw;height:82vh;max-width:1500px;border-radius:12px;box-shadow:0 40px 110px rgba(0,0,0,.8);border:1px solid rgba(255,255,255,.1);cursor:default;background:#0b0b18 url("' + lbSrc + '") center/contain no-repeat';
+
+    return {
+      navItems, navOpen: this.state.navOpen,
+      lightboxOpen: lbOpen, lightboxSrc: lbSrc, lightboxImgStyle, lightboxLabel: lbLabel, lightboxCounter: (lbI + 1) + ' / ' + lbImgs.length,
+      closeLightbox: () => this.closeLightbox(),
+      lightboxPrev: (e) => this.lightboxNav(-1, e),
+      lightboxNext: (e) => this.lightboxNav(1, e),
+      stopLb: (e) => e.stopPropagation(),
+      toggleMenu: () => this.setState(s => ({ navOpen: s.navOpen === 'true' ? 'false' : 'true' })),
+      goAbout: () => this.scrollTo('apropos'),
+      goContact: () => this.scrollTo('contact'),
+      goTop: () => window.scrollTo({ top: 0, behavior: 'smooth' }),
+      navTo: (e) => { e.preventDefault(); this.scrollTo(e.currentTarget.getAttribute('data-target')); },
+      skills, missions, partners, filters, rows, veilleArticles, veilleTools,
+      projects: projects.map((p, i) => {
+        const isImgCover = (p.imgBg || '').includes('url(');
+        return {
+          ...p, open: () => this.openProject(i),
+          cardIconStyle: isImgCover ? 'display:none' : 'width:42px;height:42px;color:rgba(255,255,255,.85)',
+          imgLabel: isImgCover ? '' : p.imgLabel
+        };
+      }),
+      modalOpen, m,
+      prevSlide: () => this.prevSlide(),
+      nextSlide: () => this.nextSlide(),
+      closeModal: () => { clearInterval(this._slideIv); this.setState({ modalIdx: null }); },
+      stop: (e) => e.stopPropagation(),
+      toast: this.state.toast,
+      downloadCV: () => window.open('doc_download/cv.pdf', '_blank'),
+      submitForm: (e) => { e.preventDefault(); e.target.reset(); this.notify('Merci ! Votre message a bien été envoyé (démo).'); }
+    };
+  }
+}
+</script>
+</body>
+</html>
