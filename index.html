@@ -1078,7 +1078,7 @@ class Component extends DCLogic {
       closeModal: () => { clearInterval(this._slideIv); this.setState({ modalIdx: null }); },
       stop: (e) => e.stopPropagation(),
       toast: this.state.toast,
-      downloadCV: () => this.notify('CV PDF à ajouter — déposez votre fichier puis liez-le ici.'),
+      downloadCV: () => window.open('doc_download/cv.pdf', '_blank'),
       submitForm: (e) => { e.preventDefault(); e.target.reset(); this.notify('Merci ! Votre message a bien été envoyé (démo).'); }
     };
   }
