@@ -1,0 +1,21 @@
+1. Couverture de carte (la vignette, ex. People&baby)
+
+Format paysage 3:2, ex. 960 × 640 px (celle que vous avez envoyée est parfaite).
+Mini : ~600 × 400 px. La zone affichée fait ~300–400 px de large × 158 px de haut, recadrée au centre (cover) → gardez le sujet bien centré, les bords haut/bas peuvent être rognés.
+2. Images du carrousel (dans le détail du projet)
+
+Là elles sont affichées en entier (contain) sur fond sombre, donc pas de recadrage : tous les formats passent (captures d'écran 16:9 comme vos écrans Atlas/Miradore, portrait, etc.).
+Idéal : largeur 1200–1920 px. Évitez plus lourd que ~1–2 Mo par image pour garder le site rapide.
+Formats de fichier : .jpg (photos/captures), .png (interfaces, logos, transparence), .webp (plus léger). Pas de .heic
+
+
+Bibliothèque emoji:https://lucide.dev/icons
+
+
+Avec les nouvelles tuiles (248 × 108 px), voici l'idéal pour vos logos partenaires :
+
+Format : PNG à fond transparent (ou SVG). Évitez le JPG.
+Dimensions : paysage, environ 480 × 200 px (ratio ≈ 2,4:1). Toute taille proche convient — visez une largeur de 400–600 px.
+Logo carré (ex. un rond/badge) : ça marche aussi, ~220 × 220 px, il sera juste centré avec des marges sur les côtés.
+Marge : laissez un petit espace vide autour du logo dans l'image (le cadre l'affiche déjà à 88 %, donc pas besoin d'en rajouter beaucoup).
+Poids : < 300 Ko par fichier.
